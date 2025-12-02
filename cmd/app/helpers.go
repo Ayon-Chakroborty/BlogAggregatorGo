@@ -14,7 +14,7 @@ type Command struct {
 
 func (a *Application) Run() error {
 	args := os.Args[1:]
-	f, err := a.CheckGatorCommand(args)
+	fn, err := a.CheckGatorCommand(args)
 	if err != nil {
 		return err
 	}
@@ -24,7 +24,7 @@ func (a *Application) Run() error {
 		Args: args[2:],
 	}
 
-	return f(cmd)
+	return fn(cmd)
 }
 
 func (a *Application) CheckGatorCommand(args []string) (GatorCommand, error) {
@@ -59,14 +59,15 @@ func (a *Application) CheckGatorCommand(args []string) (GatorCommand, error) {
 	return cmd, nil
 }
 
-func (a *Application) Register(name string, f func(Command) error) {
-	a.Commands[name] = f
+func (a *Application) Register(name string, fn func(Command) error) {
+	a.Commands[name] = fn
 }
 
 func (a *Application) RegisterCommands() {
 	a.Commands = make(map[string]GatorCommand)
 
-	a.Register("login", a.handlerLogin)
+	a.Register("login", a.loginUserHandler)
+	a.Register("register", a.createUserHandler)
 }
 
 func (c *Config) ReadConfig() {
