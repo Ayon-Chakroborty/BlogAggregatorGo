@@ -7,10 +7,11 @@ func (e GatorError) Error() string {
 }
 
 const (
-	NoProgramProvided      GatorError = "No program provided. Must start command with 'gator'"
-	NotGatorCommandErr     GatorError = "command Name does not use 'gator'"
-	NoCommandErr           GatorError = "no command provided"
-	NoCommandExistsErr     GatorError = "This gator command does not exists"
-	NoArgumentsProvidedErr GatorError = "no arguments provded"
-	TooManyArgumentsErr    GatorError = "too many arguments for command"
+	ErrNoProgramProvided   GatorError = "No program provided. Must start command with 'gator'"
+	ErrNotGatorCommand     GatorError = "command Name does not use 'gator'"
+	ErrNoCommand           GatorError = "no command provided"
+	ErrNoCommandExists     GatorError = "This gator command does not exists"
+	ErrNoArgumentsProvided GatorError = "no arguments provded"
+	ErrTooManyArguments    GatorError = "too many arguments for command"
+	ErrUserNotRegistered   GatorError = "user not registered with gator. Run gator register <name> to register with application"
 )

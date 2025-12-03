@@ -7,5 +7,6 @@ func (e GatorSqlError) Error() string {
 }
 
 const (
-	ErrRecordNotFound GatorSqlError = "record not found"
+	ErrRecordNotFound    GatorSqlError = "record not found"
+	ErrDuplicateUserName GatorSqlError = "record with this name already exists"
 )

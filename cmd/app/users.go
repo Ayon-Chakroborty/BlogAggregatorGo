@@ -1,24 +1,41 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"ayonchakroborty.net/blogaggregator/internal/data"
 )
 
 func (a *Application) loginUserHandler(cmd Command) error {
-	if len(cmd.Args) > 1 {
-		return TooManyArgumentsErr
+	if len(cmd.Args) < 1 {
+		return ErrNoArgumentsProvided
 	}
 
-	a.Config.SetUser(cmd.Args[0])
+	if len(cmd.Args) > 1 {
+		return ErrTooManyArguments
+	}
+
+	// Check if user is registered
+	name := cmd.Args[0]
+
+	user, err := a.Models.UsersModel.Get(name)
+	if err != nil {
+		return err
+	}
+
+	a.Config.SetUser(user.Name)
 	log.Printf("%q has been set as the current user", cmd.Args[0])
 	return nil
 }
 
 func (a *Application) createUserHandler(cmd Command) error {
+	if len(cmd.Args) < 1 {
+		return ErrNoArgumentsProvided
+	}
+	
 	if len(cmd.Args) > 1 {
-		return TooManyArgumentsErr
+		return ErrTooManyArguments
 	}
 
 	name := cmd.Args[0]
@@ -28,10 +45,34 @@ func (a *Application) createUserHandler(cmd Command) error {
 	}
 
 	err := a.Models.UsersModel.Insert(user)
-	if err != nil{
-		log.Println(err)
+	if err != nil {
+		return err
 	}
-	log.Printf("%+v\n", *user)
+
+	a.Config.SetUser(user.Name)
+	return nil
+}
+
+func (a *Application) listUsersHandler(cmd Command) error {
+	if len(cmd.Args) > 0 {
+		return ErrTooManyArguments
+	}
+
+	users, err := a.Models.UsersModel.ListUsers()
+	if err != nil {
+		return err
+	}
+
+	currentUsr := a.Config.Current_user_name
+
+	for _, user := range users {
+		fmt.Print("* ")
+		fmt.Printf("%s", user.Name)
+		if currentUsr == user.Name {
+			fmt.Print(" (current)")
+		}
+		fmt.Println()
+	}
 
 	return nil
 }

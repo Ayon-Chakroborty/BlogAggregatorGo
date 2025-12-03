@@ -28,32 +28,21 @@ func (a *Application) Run() error {
 }
 
 func (a *Application) CheckGatorCommand(args []string) (GatorCommand, error) {
-	switch len(args) {
-	case 0:
-		return nil, NoProgramProvided
-	case 1:
-		if args[0] != "gator" {
-			return nil, NotGatorCommandErr
-		}
-		return nil, NoCommandErr
-	case 2:
-		if args[0] != "gator" {
-			return nil, NotGatorCommandErr
-		}
-		_, exists := a.Commands[args[1]]
-		if !exists {
-			return nil, NoCommandExistsErr
-		}
-		return nil, NoArgumentsProvidedErr
+	if len(args) == 0 {
+		return nil, ErrNoProgramProvided
 	}
 
 	if args[0] != "gator" {
-		return nil, NotGatorCommandErr
+		return nil, ErrNotGatorCommand
+	}
+
+	if len(args) < 2 {
+		return nil, ErrNoCommand
 	}
 
 	cmd, exists := a.Commands[args[1]]
 	if !exists {
-		return nil, NoCommandExistsErr
+		return nil, ErrNoCommandExists
 	}
 
 	return cmd, nil
@@ -68,6 +57,7 @@ func (a *Application) RegisterCommands() {
 
 	a.Register("login", a.loginUserHandler)
 	a.Register("register", a.createUserHandler)
+	a.Register("users", a.listUsersHandler)
 }
 
 func (c *Config) ReadConfig() {
