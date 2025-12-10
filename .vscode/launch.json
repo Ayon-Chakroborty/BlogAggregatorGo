@@ -9,8 +9,8 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}cmd/app",
-            "args": ["gator", "login", "test"]
+            "program": "${workspaceFolder}/cmd/app",
+            "args": ["gator", "follow", "https://hnrss.org/newest"]
         }
     ]
 }

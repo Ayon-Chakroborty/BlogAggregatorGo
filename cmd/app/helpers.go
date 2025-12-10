@@ -58,6 +58,11 @@ func (a *Application) RegisterCommands() {
 	a.Register("login", a.loginUserHandler)
 	a.Register("register", a.createUserHandler)
 	a.Register("users", a.listUsersHandler)
+	a.Register("agg", a.FetchFeedHandler)
+	a.Register("addFeed", a.createFeedHandler)
+	a.Register("feeds", a.getAllFeedsHandler)
+	a.Register("follow", a.FollowHanlder)
+	a.Register("following", a.FollowingHandler)
 }
 
 func (c *Config) ReadConfig() {

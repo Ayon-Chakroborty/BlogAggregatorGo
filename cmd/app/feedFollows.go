@@ -1,0 +1,64 @@
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"ayonchakroborty.net/blogaggregator/internal/data"
+)
+
+func (a *Application) FollowHanlder(cmd Command) error {
+	if len(cmd.Args) < 1 {
+		return ErrNoArgumentsProvided
+	}
+
+	if len(cmd.Args) > 1 {
+		return ErrTooManyArguments
+	}
+
+	url := cmd.Args[0]
+
+	user, err := a.Models.UsersModel.Get(a.Config.Current_user_name)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	feed, err := a.Models.FeedsModel.Get(url)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	record := &data.FeedFollow{UserId: user.Id, FeedId: feed.Id}
+
+	err = a.Models.FeedFollowsModel.Insert(record)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("%q is now follwoing feed %q\n", record.UserName, record.FeedName)
+
+	return nil
+}
+
+func (a *Application) FollowingHandler(cmd Command) error {
+	if len(cmd.Args) > 0 {
+		return ErrTooManyArguments
+	}
+
+	user, err := a.Models.UsersModel.Get(a.Config.Current_user_name)
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	feeds, err := a.Models.FeedFollowsModel.Get(user.Id)
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%q is following these feeds:\n", user.Name)
+	for _, feed := range feeds{
+		fmt.Printf("feed name: %q, url: %q\n", feed.FeedName, feed.Url)
+	}
+
+	return nil
+}
