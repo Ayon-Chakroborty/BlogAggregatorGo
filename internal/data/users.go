@@ -15,8 +15,8 @@ type UsersModel struct {
 
 type User struct {
 	Id         uuid.UUID
-	Created_At time.Time
-	Updated_At time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 	Name       string
 }
 
@@ -31,7 +31,7 @@ func (m UsersModel) Insert(user *User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := m.DB.QueryRowContext(ctx, insertQry, user.Name).Scan(&user.Id, &user.Created_At, &user.Updated_At)
+	err := m.DB.QueryRowContext(ctx, insertQry, user.Name).Scan(&user.Id, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		switch {
 		case err.Error() == `pq: duplicate key value violates unique constraint "users_name_key"`:
@@ -57,8 +57,8 @@ func (m UsersModel) Get(name string) (*User, error) {
 	var user User
 	err := m.DB.QueryRowContext(ctx, getQry, name).Scan(
 		&user.Id,
-		&user.Created_At,
-		&user.Updated_At,
+		&user.CreatedAt,
+		&user.UpdatedAt,
 		&user.Name,
 	)
 
@@ -96,8 +96,8 @@ func (m UsersModel) ListUsers() ([]*User, error) {
 
 		err := rows.Scan(
 			&user.Id,
-			&user.Created_At,
-			&user.Updated_At,
+			&user.CreatedAt,
+			&user.UpdatedAt,
 			&user.Name,
 		)
 		if err != nil {

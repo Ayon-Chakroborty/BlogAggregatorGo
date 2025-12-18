@@ -59,10 +59,11 @@ func (a *Application) RegisterCommands() {
 	a.Register("register", a.createUserHandler)
 	a.Register("users", a.listUsersHandler)
 	a.Register("agg", a.FetchFeedHandler)
-	a.Register("addFeed", a.createFeedHandler)
+	a.Register("addFeed", a.middlewareLoggedIn(a.createFeedHandler))
 	a.Register("feeds", a.getAllFeedsHandler)
-	a.Register("follow", a.FollowHanlder)
-	a.Register("following", a.FollowingHandler)
+	a.Register("follow", a.middlewareLoggedIn(a.FollowHanlder))
+	a.Register("following", a.middlewareLoggedIn(a.FollowingHandler))
+	a.Register("unfollow", a.middlewareLoggedIn(a.UnfollowHandler))
 }
 
 func (c *Config) ReadConfig() {

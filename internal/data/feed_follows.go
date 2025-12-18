@@ -69,7 +69,7 @@ func (m FeedFollowsModel) Insert(f *FeedFollow) error {
 	return nil
 }
 
-const getFeedFollowUserQry = `
+const getAllFeedFollowUserQry = `
 SELECT feed_follows.id, feed_follows.created_at, feed_follows.updated_at, feed_follows.user_id, feed_follows.feed_id,
 	feeds.name as feed_name,
 	feeds.url as feed_url
@@ -77,11 +77,11 @@ FROM feed_follows
 INNER JOIN feeds ON feeds.id = feed_follows.feed_id
 WHERE feed_follows.user_id = $1;`
 
-func (m FeedFollowsModel) Get(userId uuid.UUID) ([]*FeedFollow, error) {
+func (m FeedFollowsModel) GetAll(userId uuid.UUID) ([]*FeedFollow, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	rows, err := m.DB.QueryContext(ctx, getFeedFollowUserQry, userId)
+	rows, err := m.DB.QueryContext(ctx, getAllFeedFollowUserQry, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -114,4 +114,35 @@ func (m FeedFollowsModel) Get(userId uuid.UUID) ([]*FeedFollow, error) {
 	}
 
 	return feeds, nil
+}
+
+const deleteFeedFollowsQry = `
+DELETE FROM feed_follows
+WHERE feed_id = $1 and user_id = $2;`
+
+func (m FeedFollowsModel) Delete(feedId int, userId uuid.UUID) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	args := []any{
+		feedId, 
+		userId,
+	}
+
+	result, err := m.DB.ExecContext(ctx, deleteFeedFollowsQry, args...)
+	if err != nil{
+		return err
+	}
+
+	// Check db if record was deleted and not in db
+	affected, err := result.RowsAffected()
+	if err != nil{
+		return err
+	}
+
+	if affected == 0{
+		return ErrRecordNotFound
+	}
+
+	return nil
 }

@@ -7,7 +7,7 @@ import (
 	"ayonchakroborty.net/blogaggregator/internal/data"
 )
 
-func (a *Application) FollowHanlder(cmd Command) error {
+func (a *Application) FollowHanlder(cmd Command, user data.User) error {
 	if len(cmd.Args) < 1 {
 		return ErrNoArgumentsProvided
 	}
@@ -17,11 +17,6 @@ func (a *Application) FollowHanlder(cmd Command) error {
 	}
 
 	url := cmd.Args[0]
-
-	user, err := a.Models.UsersModel.Get(a.Config.Current_user_name)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
 
 	feed, err := a.Models.FeedsModel.Get(url)
 	if err != nil {
@@ -40,25 +35,46 @@ func (a *Application) FollowHanlder(cmd Command) error {
 	return nil
 }
 
-func (a *Application) FollowingHandler(cmd Command) error {
+func (a *Application) FollowingHandler(cmd Command, user data.User) error {
 	if len(cmd.Args) > 0 {
 		return ErrTooManyArguments
 	}
 
-	user, err := a.Models.UsersModel.Get(a.Config.Current_user_name)
-	if err != nil{
-		log.Fatal(err)
-	}
-
-	feeds, err := a.Models.FeedFollowsModel.Get(user.Id)
-	if err != nil{
+	feeds, err := a.Models.FeedFollowsModel.GetAll(user.Id)
+	if err != nil {
 		log.Fatal(err)
 	}
 
 	fmt.Printf("%q is following these feeds:\n", user.Name)
-	for _, feed := range feeds{
+	for _, feed := range feeds {
 		fmt.Printf("feed name: %q, url: %q\n", feed.FeedName, feed.Url)
 	}
 
+	return nil
+}
+
+func (a *Application) UnfollowHandler(cmd Command, user data.User) error {
+	if len(cmd.Args) < 1{
+		return ErrNoArgumentsProvided
+	}
+
+	if len(cmd.Args) > 1 {
+		return ErrTooManyArguments
+	}
+
+	url := cmd.Args[0]
+
+	feed, err := a.Models.FeedsModel.Get(url)
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	err = a.Models.FeedFollowsModel.Delete(feed.Id, user.Id)
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%q has unfollowed %q\n", user.Name, feed.Url)
+	
 	return nil
 }

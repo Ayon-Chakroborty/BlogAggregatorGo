@@ -3,10 +3,15 @@ package main
 import (
 	"context"
 	"encoding/xml"
+	"fmt"
+	"html"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"time"
+
+	"jaytaylor.com/html2text"
 )
 
 type RSSFeed struct {
@@ -34,17 +39,16 @@ func (a *Application) FetchFeedHandler(cmd Command) error {
 		return ErrTooManyArguments
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-
-	feedURL := cmd.Args[0]
-
-	rssFeed, err := fetchFeed(ctx, feedURL)
-	if err != nil {
-		log.Fatal(err.Error())
+	t, err := time.ParseDuration(cmd.Args[0])
+	if err != nil{
+		log.Fatal(err)
 	}
 
-	log.Printf("%+v", rssFeed)
+	ticker := time.NewTicker(t)
+	for ; ; <-ticker.C{
+		a.scrapeFeeds()
+	}
+
 	return nil
 }
 
@@ -77,4 +81,54 @@ func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
 	}
 
 	return rf, nil
+}
+
+func (a *Application) scrapeFeeds() error {
+	feeds, err := a.Models.FeedsModel.GetOrderedFeeds()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	defer cancel()
+
+	for _, feed := range feeds {
+		err := a.Models.FeedsModel.UpdatedLastFetched(feed.Url)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		rssFeed, err := fetchFeed(ctx, feed.Url)
+		if err != nil{
+			log.Fatal(err)
+		}
+
+		for i, _ := range rssFeed.Channel.Item {
+			text, err := formatHtml(rssFeed.Channel.Item[i])
+			if err != nil{
+				return nil
+			}
+
+			fmt.Println(text)
+		}	
+	}
+
+	return nil
+}
+
+func formatHtml(item RSSItem) (string, error) {
+	
+	var sb strings.Builder
+
+	sb.WriteString(html.UnescapeString(item.Title))
+	sb.WriteString(html.UnescapeString(item.Link))
+	sb.WriteString(html.UnescapeString(item.Description))
+	sb.WriteString(html.UnescapeString(item.PubDate))
+
+	text, err := html2text.FromString(sb.String(), html2text.Options{TextOnly: true})
+	if err != nil{
+		return "", err
+	}
+
+	return text, nil
 }
