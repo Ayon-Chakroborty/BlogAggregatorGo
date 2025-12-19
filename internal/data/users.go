@@ -14,10 +14,10 @@ type UsersModel struct {
 }
 
 type User struct {
-	Id         uuid.UUID
+	Id        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Name       string
+	Name      string
 }
 
 // adds a new user record
