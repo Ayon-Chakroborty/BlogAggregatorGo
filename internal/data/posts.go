@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type PostsModels struct {
+type PostsModel struct {
 	DB *sql.DB
 }
 
@@ -28,12 +28,12 @@ VALUES (
 	$2,
 	$3,
 	$4,
-	(SELECT feeds.id FROM feeds WHERE feeds.url = $5)
+	(SELECT feeds.id FROM feeds WHERE feeds.url = $2)
 )
 	
 RETURNING id, created_at, updated_at;`
 
-func (m PostsModels) Insert(post *Post) error {
+func (m PostsModel) Insert(post *Post) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -55,4 +55,50 @@ func (m PostsModels) Insert(post *Post) error {
 	}
 
 	return nil
+}
+
+const getPostQry = `
+SELECT posts.id, posts.created_at, posts.updated_at, posts.title, posts.url, posts.description, posts.published_at, posts.feed_id
+FROM posts
+INNER JOIN feeds ON posts.feed_id = feeds_id
+WHERE feeds.user_id = $1;`
+
+func (m PostsModel) GetAll(user *User) ([]*Post, error){
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, getPostQry, user.Id)
+	if err != nil{
+		return nil, err
+	}
+	defer rows.Close()
+
+	posts := []*Post{}
+
+	for rows.Next() {
+		var post Post
+
+		err := rows.Scan(
+			&post.Id,
+			&post.CreatedAt,
+			&post.UpdatedAt,
+			&post.Title,
+			&post.Url,
+			&post.Description,
+			&post.PublishedAt,
+			&post.FeedId,
+		)
+
+		if err != nil{
+			return nil, err
+		}
+
+		posts = append(posts, &post)
+	}
+
+	if err := rows.Err(); err != nil{
+		return nil, err
+	}
+
+	return posts, nil
 }

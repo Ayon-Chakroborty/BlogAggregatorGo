@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"encoding/xml"
-	"fmt"
+	"errors"
 	"html"
 	"io"
 	"log"
@@ -11,8 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"ayonchakroborty.net/blogaggregator/internal/data"
 	"jaytaylor.com/html2text"
 )
+
+const layout = "Mon, 02 Jan 2006 15:04:05 -0700"
 
 type RSSFeed struct {
 	Channel struct {
@@ -40,16 +43,14 @@ func (a *Application) FetchFeedHandler(cmd Command) error {
 	}
 
 	t, err := time.ParseDuration(cmd.Args[0])
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
 	ticker := time.NewTicker(t)
-	for ; ; <-ticker.C{
+	for ; ; <-ticker.C {
 		a.scrapeFeeds()
 	}
-
-	return nil
 }
 
 func fetchFeed(ctx context.Context, feedURL string) (*RSSFeed, error) {
@@ -89,7 +90,7 @@ func (a *Application) scrapeFeeds() error {
 		log.Fatal(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	for _, feed := range feeds {
@@ -99,25 +100,38 @@ func (a *Application) scrapeFeeds() error {
 		}
 
 		rssFeed, err := fetchFeed(ctx, feed.Url)
-		if err != nil{
+		if err != nil {
 			log.Fatal(err)
 		}
 
-		for i, _ := range rssFeed.Channel.Item {
-			text, err := formatHtml(rssFeed.Channel.Item[i])
-			if err != nil{
-				return nil
+		for i := range rssFeed.Channel.Item {
+			pubDate, err := time.Parse(layout, rssFeed.Channel.Item[i].PubDate)
+			if err != nil {
+				log.Fatal(err)
 			}
 
-			fmt.Println(text)
-		}	
+			post := &data.Post{
+				Title:       rssFeed.Channel.Item[i].Title,
+				Url:         rssFeed.Channel.Item[i].Link,
+				Description: rssFeed.Channel.Item[i].Description,
+				PublishedAt: pubDate,
+			}
+
+			err = a.Models.PostsModel.Insert(post)
+			switch {
+			case errors.Is(err, data.ErrDuplicateUrl):
+				continue
+			default:
+				log.Fatal(err)
+			}
+		}
 	}
 
 	return nil
 }
 
-func formatHtml(item RSSItem) (string, error) {
-	
+/*func formatHtml(item RSSItem) (string, error) {
+
 	var sb strings.Builder
 
 	sb.WriteString(html.UnescapeString(item.Title))
@@ -126,9 +140,9 @@ func formatHtml(item RSSItem) (string, error) {
 	sb.WriteString(html.UnescapeString(item.PubDate))
 
 	text, err := html2text.FromString(sb.String(), html2text.Options{TextOnly: true})
-	if err != nil{
+	if err != nil {
 		return "", err
 	}
 
 	return text, nil
-}
+}*/
