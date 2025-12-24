@@ -4,15 +4,12 @@ import (
 	"context"
 	"encoding/xml"
 	"errors"
-	"html"
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"ayonchakroborty.net/blogaggregator/internal/data"
-	"jaytaylor.com/html2text"
 )
 
 const layout = "Mon, 02 Jan 2006 15:04:05 -0700"
