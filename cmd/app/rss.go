@@ -114,12 +114,14 @@ func (a *Application) scrapeFeeds() error {
 				PublishedAt: pubDate,
 			}
 
-			err = a.Models.PostsModel.Insert(post)
-			switch {
-			case errors.Is(err, data.ErrDuplicateUrl):
-				continue
-			default:
-				log.Fatal(err)
+			err = a.Models.PostsModel.Insert(post, feed.Url)
+			if err != nil {
+				switch {
+				case errors.Is(err, data.ErrDuplicateUrl):
+					continue
+				default:
+					log.Fatal(err)
+				}
 			}
 		}
 	}

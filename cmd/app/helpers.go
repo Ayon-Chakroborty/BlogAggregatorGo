@@ -64,6 +64,7 @@ func (a *Application) RegisterCommands() {
 	a.Register("follow", a.middlewareLoggedIn(a.FollowHanlder))
 	a.Register("following", a.middlewareLoggedIn(a.FollowingHandler))
 	a.Register("unfollow", a.middlewareLoggedIn(a.UnfollowHandler))
+	a.Register("browse", a.middlewareLoggedIn(a.BrowseHandler))
 }
 
 func (c *Config) ReadConfig() {
